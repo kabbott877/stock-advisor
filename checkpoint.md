@@ -2,8 +2,8 @@
 
 ## Current State
 
-- **Phase:** 1.1 Earnings Calendar (IN PROGRESS)
-- **Blocked on:** Polygon.io API key needed
+- **Phase:** 1.1 Earnings Calendar ✅
+- **Next:** 1.2 Price Data (Polygon.io aggregate bars)
 - **Servers:** Running on MUTHUR (UI :5173, API :3001)
 - **Repo:** https://github.com/kabbott877/stock-advisor (public)
 
@@ -12,22 +12,23 @@
 - **Frontend:** React + Vite (port 5173)
 - **Backend:** Node.js + Express (port 3001)
 - **Auth:** Multi-user with JWT (in-memory store)
-- **Data:** Polygon.io (pending API key)
+- **Data:** SEC EDGAR (earnings), Polygon.io (prices, key in .env)
 
 ## What's Done
 
 - [x] Phase 0: Project setup
-- [x] Phase 2: Scan feature (mock data)
+- [x] Phase 1.1: Earnings calendar (SEC EDGAR 8-K Item 2.02)
+- [x] Phase 2: Scan feature (mock data → now uses real earnings data)
 - [x] Phase 3: Research detail view (mock data)
 - [x] CORS configured (localhost, LAN, Tailscale)
 - [x] Repo pushed to GitHub, public
 
 ## What's Next
 
-1. **Get Polygon.io API key** (free tier OK for dev)
-2. Add key to `server/.env` as `POLYGON_API_KEY`
-3. Implement earnings calendar integration (Phase 1.1)
-4. Then: price data (1.2), ATR (1.3), fundamentals (1.4)
+1. **Phase 1.2:** Price data from Polygon.io (aggregate bars)
+2. **Phase 1.3:** ATR calculation (30-day trailing)
+3. **Phase 1.4:** Fundamentals (earnings actual vs estimate)
+4. Wire price + ATR into scan to filter overreaction (>1.5x ATR)
 
 ## Key Commands
 
@@ -48,7 +49,7 @@ npm run dev            # Start client + server
 ├── checkpoint.md               # This file
 ├── docs/
 │   ├── devspec.md              # Full specification
-│   └── worklist.md             # Phased work plan (Phase 1.1 = CURRENT)
+│   └── worklist.md             # Phased work plan (Phase 1.2 = CURRENT)
 └── src/
     ├── package.json
     ├── README.md
@@ -65,7 +66,9 @@ npm run dev            # Start client + server
         └── src/
             ├── index.js
             ├── middleware/auth.js
-            └── routes/         # auth, scan, research
+            ├── services/       # Data layer
+            │   └── earningsCalendar.js  # SEC EDGAR earnings calendar
+            └── routes/         # auth, earnings, scan, research
 ```
 
 ## Team
@@ -78,5 +81,6 @@ npm run dev            # Start client + server
 ## Notes
 
 - In-memory user store — resets on server restart
-- Scan/research routes return mock data — awaiting Polygon.io integration
+- Earnings calendar uses SEC EDGAR (free, no API key needed)
+- Scan route returns real earnings data; move% and ATR pending Phase 1.2+
 - CORS allows localhost, 192.168.1.189, 100.73.91.28

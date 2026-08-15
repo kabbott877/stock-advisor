@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
 import authRoutes from './routes/auth.js';
+import earningsRoutes from './routes/earnings.js';
 import scanRoutes from './routes/scan.js';
 import researchRoutes from './routes/research.js';
 
@@ -46,6 +47,7 @@ app.use('/api/', limiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/earnings', earningsRoutes);
 app.use('/api/scan', scanRoutes);
 app.use('/api/research', researchRoutes);
 
