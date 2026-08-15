@@ -2,8 +2,8 @@
 
 ## Current State
 
-- **Phase:** 1.2 Price Data ✅
-- **Next:** 1.3 ATR Calculation (30-day trailing)
+- **Phase:** 1.3 ATR Calculation ✅
+- **Next:** 1.4 Fundamentals (earnings actual vs estimate)
 - **Servers:** Running on MUTHUR (UI :5173, API :3001)
 - **Repo:** https://github.com/kabbott877/stock-advisor (public)
 
@@ -19,6 +19,7 @@
 - [x] Phase 0: Project setup
 - [x] Phase 1.1: Earnings calendar (SEC EDGAR 8-K Item 2.02)
 - [x] Phase 1.2: Price data (Polygon.io aggregate bars, movePercent)
+- [x] Phase 1.3: ATR calculation (30-day trailing, >1.5x flag)
 - [x] Phase 2: Scan feature (real earnings + price data)
 - [x] Phase 3: Research detail view (mock data)
 - [x] Phase 4: Master-Detail UI (inline expansion)
@@ -27,9 +28,9 @@
 
 ## What's Next
 
-1. **Phase 1.3:** ATR calculation (30-day trailing)
-2. **Phase 1.4:** Fundamentals (earnings actual vs estimate)
-3. Wire ATR into scan to filter overreaction (>1.5x ATR)
+1. **Phase 1.4:** Fundamentals (earnings actual vs estimate, guidance changes)
+2. Wire fundamentals into scan to filter material changes
+3. Replace mock data in research detail with real API calls
 
 ## Key Commands
 
@@ -65,7 +66,7 @@ npm run dev            # Start client + server
         ├── middleware/auth.js
         ├── services/           # Data layer
         │   ├── earningsCalendar.js  # SEC EDGAR earnings calendar
-        │   └── priceData.js         # Polygon.io OHLC + move calculation
+        │   └── priceData.js         # Polygon.io OHLC, move calc, ATR calc
         └── routes/             # auth, earnings, scan, research
 ```
 

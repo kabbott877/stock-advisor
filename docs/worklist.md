@@ -28,10 +28,10 @@
 - [x] Batch fetch with rate limiting (free tier: 5 calls/min)
 - [x] Sort results by absolute move (biggest movers first)
 
-### 1.3 ATR Calculation
-- [ ] Implement 30-day trailing ATR
-- [ ] Calculate earnings day range vs ATR ratio
-- [ ] Flag stocks exceeding threshold (>1.5x ATR)
+### 1.3 ATR Calculation ✅
+- [x] Implement 30-day trailing ATR
+- [x] Calculate earnings day range vs ATR ratio
+- [x] Flag stocks exceeding threshold (>1.5x ATR)
 
 ### 1.4 Fundamentals
 - [ ] Fetch earnings release data (actual vs estimate)

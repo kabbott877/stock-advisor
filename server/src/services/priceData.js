@@ -8,14 +8,15 @@
  */
 
 const POLYGON_BASE = 'https://api.massive.com';
-const REQUEST_DELAY_MS = 12000; // 5 calls/min = 1 per 12s on free tier
+const REQUEST_DELAY_MS = 13000; // 5 calls/min = ~13s between requests on free tier
 
 let lastRequestTime = 0;
 
 /**
  * Rate-limit wrapper: ensures at least REQUEST_DELAY_MS between requests.
+ * Retries on 429 with exponential backoff.
  */
-async function rateLimitedFetch(url) {
+async function rateLimitedFetch(url, retries = 2) {
   const now = Date.now();
   const elapsed = now - lastRequestTime;
   if (elapsed < REQUEST_DELAY_MS) {
@@ -24,15 +25,25 @@ async function rateLimitedFetch(url) {
 
   lastRequestTime = Date.now();
 
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'StockAdvisor/1.0' }
-  });
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'StockAdvisor/1.0' }
+    });
 
-  if (!res.ok) {
-    throw new Error(`Polygon API error: ${res.status} ${res.statusText}`);
+    if (res.status === 429 && attempt < retries) {
+      const wait = (attempt + 2) * 15000; // 30s, 45s backoff
+      console.log(`[PriceData] 429 rate limited, waiting ${wait / 1000}s before retry...`);
+      await new Promise(r => setTimeout(r, wait));
+      lastRequestTime = Date.now();
+      continue;
+    }
+
+    if (!res.ok) {
+      throw new Error(`Polygon API error: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json();
   }
-
-  return res.json();
 }
 
 /**
@@ -126,6 +137,105 @@ async function getATRHistory(ticker, endDate) {
 }
 
 /**
+ * Calculate 30-day trailing Average True Range (ATR).
+ *
+ * True Range = max(high - low, |high - prevClose|, |low - prevClose|)
+ * ATR = Simple Moving Average of True Range over 30 trading days
+ *
+ * @param {Array} bars - Array of daily bars (sorted asc by date)
+ * @param {number} period - ATR period (default 30)
+ * @returns {number|null} ATR value, or null if insufficient data
+ */
+function calculateATR(bars, period = 30) {
+  if (!bars || bars.length < period + 1) {
+    // Need period+1 bars: period True Ranges + 1 prevClose for first TR
+    return null;
+  }
+
+  const trueRanges = [];
+
+  for (let i = 1; i < bars.length; i++) {
+    const high = bars[i].high;
+    const low = bars[i].low;
+    const prevClose = bars[i - 1].close;
+
+    const tr = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+    trueRanges.push(tr);
+  }
+
+  // Use last `period` True Ranges for the ATR
+  const recentTR = trueRanges.slice(-period);
+  const atr = recentTR.reduce((sum, tr) => sum + tr, 0) / recentTR.length;
+
+  return Math.round(atr * 100) / 100;
+}
+
+/**
+ * Get the ATR ratio for a stock's earnings day move.
+ * Ratio = earnings day range / 30-day ATR
+ *
+ * A ratio > 1.5 suggests the move exceeded normal volatility —
+ * a potential overreaction candidate.
+ *
+ * @param {string} ticker - Stock symbol
+ * @param {string} earningsDate - YYYY-MM-DD
+ * @returns {Promise<Object|null>} { atr, atrRatio, flagged } or null
+ */
+async function getATRRatio(ticker, earningsDate) {
+  try {
+    // Fetch 30-day history ending on earnings date
+    const bars = await getATRHistory(ticker, earningsDate);
+    if (!bars || bars.length < 31) {
+      console.log(`[ATR] Insufficient data for ${ticker}: got ${bars?.length || 0} bars, need 31`);
+      return null;
+    }
+
+    // Calculate 30-day ATR
+    const atr = calculateATR(bars, 30);
+    if (!atr || atr === 0) {
+      return null;
+    }
+
+    // Get earnings day bar (last bar in the range)
+    const earningsBar = bars[bars.length - 1];
+    const earningsDayRange = earningsBar.high - earningsBar.low;
+
+    // Calculate ratio
+    const atrRatio = Math.round((earningsDayRange / atr) * 100) / 100;
+    const flagged = atrRatio > 1.5;
+
+    return { atr, atrRatio, flagged };
+  } catch (err) {
+    console.error(`[ATR] Error for ${ticker}:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * Batch fetch ATR ratios for multiple tickers.
+ * Respects rate limits by sequential fetching.
+ *
+ * @param {Array} earnings - Array of { ticker, earningsDate }
+ * @returns {Promise<Map>} Map of ticker -> { atr, atrRatio, flagged }
+ */
+async function batchATRRatios(earnings) {
+  const results = new Map();
+
+  for (const item of earnings) {
+    const atrData = await getATRRatio(item.ticker, item.earningsDate);
+    if (atrData) {
+      results.set(item.ticker, atrData);
+    }
+  }
+
+  return results;
+}
+
+/**
  * Batch fetch earnings day moves for multiple tickers.
  * Respects rate limits by sequential fetching.
  *
@@ -149,5 +259,8 @@ export {
   getDailyBars,
   getEarningsDayMove,
   getATRHistory,
+  calculateATR,
+  getATRRatio,
+  batchATRRatios,
   batchEarningsDayMoves
 };

@@ -1,7 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { getRecentEarnings } from '../services/earningsCalendar.js';
-import { batchEarningsDayMoves } from '../services/priceData.js';
+import { batchEarningsDayMoves, batchATRRatios } from '../services/priceData.js';
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.use(authenticateToken);
 router.get('/', async (req, res) => {
   try {
     const daysBack = Math.min(parseInt(req.query.daysBack) || 2, 7);
-    const limit = Math.min(parseInt(req.query.limit) || 20, 50);
+    const limit = Math.min(parseInt(req.query.limit) || 2, 50);
 
     console.log(`[Scan] Running earnings scan (${daysBack} days back, limit ${limit})`);
 
@@ -38,9 +38,14 @@ router.get('/', async (req, res) => {
     const priceData = await batchEarningsDayMoves(toFetch);
     console.log(`[Scan] Got price data for ${priceData.size} tickers`);
 
-    // Step 4: Merge earnings calendar with price data
+    // Step 4: Calculate ATR ratios (30-day trailing)
+    const atrData = await batchATRRatios(toFetch);
+    console.log(`[Scan] Got ATR data for ${atrData.size} tickers`);
+
+    // Step 5: Merge earnings calendar with price data and ATR
     const results = earnings.map(item => {
       const prices = priceData.get(item.ticker);
+      const atr = atrData.get(item.ticker);
       return {
         symbol: item.ticker,
         earningsDate: item.earningsDate,
@@ -52,18 +57,24 @@ router.get('/', async (req, res) => {
         high: prices?.high ?? null,
         low: prices?.low ?? null,
         volume: prices?.volume ?? null,
-        atrRatio: null,          // Phase 1.3: from ATR calculation
+        atr: atr?.atr ?? null,
+        atrRatio: atr?.atrRatio ?? null,
+        flagged: atr?.flagged ?? false,
         fundamentalChange: false, // Phase 1.4: from fundamentals analysis
         source: item.source,
         filingAccession: item.filingAccession
       };
     });
 
-    // Sort by absolute movePercent descending (biggest movers first)
+    // Sort: flagged (>1.5x ATR) first, then by ATR ratio descending
     results.sort((a, b) => {
-      if (a.movePercent === null) return 1;
-      if (b.movePercent === null) return -1;
-      return Math.abs(b.movePercent) - Math.abs(a.movePercent);
+      // Flagged items first
+      if (a.flagged && !b.flagged) return -1;
+      if (!a.flagged && b.flagged) return 1;
+      // Then by ATR ratio descending
+      if (a.atrRatio === null) return 1;
+      if (b.atrRatio === null) return -1;
+      return b.atrRatio - a.atrRatio;
     });
 
     res.json({

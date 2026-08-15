@@ -82,8 +82,11 @@ function ScanResults({ results, token }) {
         <tbody>
           {filteredResults.map((result) => (
             <React.Fragment key={result.symbol}>
-              <tr className={expandedSymbol === result.symbol ? 'expanded-row' : ''}>
-                <td className="symbol">{result.symbol}</td>
+              <tr className={`${expandedSymbol === result.symbol ? 'expanded-row' : ''} ${result.flagged ? 'flagged-row' : ''}`}>
+                <td className="symbol">
+                  {result.symbol}
+                  {result.flagged && <span className="flag-badge" title="Overreaction candidate (>1.5x ATR)">⚡</span>}
+                </td>
                 <td>{result.earningsDate}</td>
                 <td className={result.movePercent >= 0 ? 'positive' : 'negative'}>
                   {result.movePercent !== null

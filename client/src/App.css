@@ -248,6 +248,17 @@ body {
   color: var(--accent);
 }
 
+.flagged-row {
+  background: rgba(233, 69, 96, 0.08);
+  border-left: 3px solid var(--accent);
+}
+
+.flag-badge {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  cursor: help;
+}
+
 .positive {
   color: var(--success);
 }
