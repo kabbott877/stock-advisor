@@ -21,10 +21,12 @@
 - [x] Create /api/earnings endpoint
 - [x] Wire into /api/scan route
 
-### 1.2 Price Data
-- [ ] Integrate Polygon.io price data API
-- [ ] Fetch intraday OHLC for earnings day
-- [ ] Fetch 30-day historical for ATR baseline
+### 1.2 Price Data ✅
+- [x] Integrate Polygon.io price data API (aggregate bars)
+- [x] Fetch intraday OHLC for earnings day
+- [x] Calculate movePercent (close vs open) and rangePercent (high-low)
+- [x] Batch fetch with rate limiting (free tier: 5 calls/min)
+- [x] Sort results by absolute move (biggest movers first)
 
 ### 1.3 ATR Calculation
 - [ ] Implement 30-day trailing ATR
