@@ -14,7 +14,7 @@
 
 ## Phase 1: Data Layer
 
-### 1.1 Earnings Calendar
+### 1.1 Earnings Calendar (CURRENT)
 - [ ] Integrate Polygon.io earnings calendar API
 - [ ] Fetch upcoming/recent earnings (last 1-2 days)
 - [ ] Normalize response to standard format (ticker, date, time)
