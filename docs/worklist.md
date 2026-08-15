@@ -98,6 +98,7 @@
 
 ## Phase 4: Polish & Ship
 
+- [x] Master-Detail layout: inline expansion below selected row (no more scrolling to bottom)
 - [ ] UI refinement (responsive)
 - [ ] Error handling (API failures, rate limits)
 - [ ] Loading states and empty states

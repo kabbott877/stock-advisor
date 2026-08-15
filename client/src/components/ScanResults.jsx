@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import SymbolDetail from './SymbolDetail';
 
-function ScanResults({ results, onSelect }) {
+function ScanResults({ results, token }) {
   const [sortField, setSortField] = useState('atrRatio');
   const [sortDirection, setSortDirection] = useState('desc');
   const [filter, setFilter] = useState('');
+  const [expandedSymbol, setExpandedSymbol] = useState(null);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -12,6 +14,10 @@ function ScanResults({ results, onSelect }) {
       setSortField(field);
       setSortDirection('desc');
     }
+  };
+
+  const handleToggle = (symbol) => {
+    setExpandedSymbol(expandedSymbol === symbol ? null : symbol);
   };
 
   const filteredResults = results
@@ -23,6 +29,9 @@ function ScanResults({ results, onSelect }) {
       const bVal = b[sortField];
       const modifier = sortDirection === 'asc' ? 1 : -1;
 
+      if (aVal === null) return 1;
+      if (bVal === null) return -1;
+
       if (typeof aVal === 'string') {
         return aVal.localeCompare(bVal) * modifier;
       }
@@ -33,6 +42,8 @@ function ScanResults({ results, onSelect }) {
     if (sortField !== field) return '';
     return sortDirection === 'asc' ? ' ↑' : ' ↓';
   };
+
+  const columns = 6;
 
   return (
     <div className="scan-results">
@@ -70,27 +81,42 @@ function ScanResults({ results, onSelect }) {
         </thead>
         <tbody>
           {filteredResults.map((result) => (
-            <tr key={result.symbol}>
-              <td className="symbol">{result.symbol}</td>
-              <td>{result.earningsDate}</td>
-              <td className={result.movePercent >= 0 ? 'positive' : 'negative'}>
-                {result.movePercent > 0 ? '+' : ''}{result.movePercent}%
-              </td>
-              <td className={result.atrRatio >= 2 ? 'high-ratio' : ''}>
-                {result.atrRatio}x
-              </td>
-              <td className={result.fundamentalChange ? 'warning' : ''}>
-                {result.fundamentalChange ? 'Yes' : 'No'}
-              </td>
-              <td>
-                <button
-                  className="research-button"
-                  onClick={() => onSelect(result.symbol)}
-                >
-                  Research
-                </button>
-              </td>
-            </tr>
+            <React.Fragment key={result.symbol}>
+              <tr className={expandedSymbol === result.symbol ? 'expanded-row' : ''}>
+                <td className="symbol">{result.symbol}</td>
+                <td>{result.earningsDate}</td>
+                <td className={result.movePercent >= 0 ? 'positive' : 'negative'}>
+                  {result.movePercent !== null
+                    ? `${result.movePercent > 0 ? '+' : ''}${result.movePercent}%`
+                    : '—'}
+                </td>
+                <td className={result.atrRatio >= 2 ? 'high-ratio' : ''}>
+                  {result.atrRatio !== null ? `${result.atrRatio}x` : '—'}
+                </td>
+                <td className={result.fundamentalChange ? 'warning' : ''}>
+                  {result.fundamentalChange ? 'Yes' : 'No'}
+                </td>
+                <td>
+                  <button
+                    className={`research-button ${expandedSymbol === result.symbol ? 'active' : ''}`}
+                    onClick={() => handleToggle(result.symbol)}
+                  >
+                    {expandedSymbol === result.symbol ? 'Close' : 'Research'}
+                  </button>
+                </td>
+              </tr>
+              {expandedSymbol === result.symbol && (
+                <tr className="detail-row">
+                  <td colSpan={columns}>
+                    <SymbolDetail
+                      symbol={result.symbol}
+                      token={token}
+                      onClose={() => setExpandedSymbol(null)}
+                    />
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
           ))}
         </tbody>
       </table>

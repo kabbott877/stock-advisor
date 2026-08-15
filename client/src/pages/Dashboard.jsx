@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
 import ScanResults from '../components/ScanResults';
-import SymbolDetail from '../components/SymbolDetail';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function Dashboard({ token }) {
   const [scanResults, setScanResults] = useState([]);
-  const [selectedSymbol, setSelectedSymbol] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,14 +26,6 @@ function Dashboard({ token }) {
     }
   };
 
-  const handleSymbolSelect = (symbol) => {
-    setSelectedSymbol(symbol);
-  };
-
-  const handleCloseDetail = () => {
-    setSelectedSymbol(null);
-  };
-
   return (
     <div className="dashboard">
       <div className="scan-controls">
@@ -52,15 +42,7 @@ function Dashboard({ token }) {
       {scanResults.length > 0 && (
         <ScanResults
           results={scanResults}
-          onSelect={handleSymbolSelect}
-        />
-      )}
-
-      {selectedSymbol && (
-        <SymbolDetail
-          symbol={selectedSymbol}
           token={token}
-          onClose={handleCloseDetail}
         />
       )}
     </div>

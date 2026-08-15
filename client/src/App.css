@@ -503,3 +503,24 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
 }
+
+/* Master-Detail */
+.expanded-row {
+  background: var(--bg-tertiary) !important;
+}
+
+.detail-row td {
+  padding: 0 !important;
+  border-bottom: 2px solid var(--accent) !important;
+}
+
+.detail-row .symbol-detail {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.research-button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
