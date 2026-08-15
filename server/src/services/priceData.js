@@ -128,7 +128,7 @@ async function getEarningsDayMove(ticker, earningsDate) {
 async function getATRHistory(ticker, endDate) {
   const end = new Date(endDate);
   const start = new Date(end);
-  start.setDate(start.getDate() - 35); // extra days to ensure 30 trading days
+  start.setDate(start.getDate() - 60); // 60 calendar days to ensure 30+ trading days
 
   const from = start.toISOString().split('T')[0];
   const to = endDate;
