@@ -14,10 +14,12 @@
 
 ## Phase 1: Data Layer
 
-### 1.1 Earnings Calendar (CURRENT)
-- [ ] Integrate Polygon.io earnings calendar API
-- [ ] Fetch upcoming/recent earnings (last 1-2 days)
-- [ ] Normalize response to standard format (ticker, date, time)
+### 1.1 Earnings Calendar ✅
+- [x] Integrate SEC EDGAR earnings calendar (8-K Item 2.02 filings)
+- [x] Fetch upcoming/recent earnings (last 1-2 days)
+- [x] Normalize response to standard format (ticker, date, time)
+- [x] Create /api/earnings endpoint
+- [x] Wire into /api/scan route
 
 ### 1.2 Price Data
 - [ ] Integrate Polygon.io price data API
