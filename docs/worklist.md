@@ -33,10 +33,11 @@
 - [x] Calculate earnings day range vs ATR ratio
 - [x] Flag stocks exceeding threshold (>1.5x ATR)
 
-### 1.4 Fundamentals
-- [ ] Fetch earnings release data (actual vs estimate)
-- [ ] Extract guidance changes
-- [ ] Flag one-time items (restructuring, legal, FX)
+### 1.4 Fundamentals ✅
+- [x] Fetch earnings release data from 8-K filings (actual vs estimate pending paid API)
+- [x] Extract guidance changes (up/down/maintained)
+- [x] Flag one-time items (restructuring, legal, FX, etc.)
+- [x] Wire fundamentals into scan route
 
 ---
 
@@ -44,9 +45,10 @@
 
 ### 2.1 Backend Scan ✅
 - [x] Create `/api/scan` endpoint
-- [x] Orchestrate: calendar → prices → ATR → fundamentals (mock)
+- [x] Orchestrate: calendar → prices → ATR → fundamentals
 - [x] Return ranked list of flagged symbols
-- [ ] Replace mock data with real Polygon.io integration
+- [x] Real Polygon.io integration (price data, ATR)
+- [x] Real SEC EDGAR integration (earnings calendar, fundamentals)
 
 ### 2.2 Frontend Scan ✅
 - [x] Build "Run Scan" button component

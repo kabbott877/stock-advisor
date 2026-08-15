@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { getRecentEarnings } from '../services/earningsCalendar.js';
 import { batchEarningsDayMoves, batchATRRatios } from '../services/priceData.js';
+import { batchFundamentals } from '../services/fundamentals.js';
 
 const router = express.Router();
 
@@ -12,12 +13,11 @@ router.use(authenticateToken);
  * GET /api/scan - Run earnings overreaction scan
  *
  * Fetches recent earnings from SEC EDGAR, then gets price data
- * from Polygon.io to calculate earnings day moves.
+ * from Polygon.io to calculate earnings day moves and ATR ratios.
  *
  * Query params:
  *   - daysBack (number, default 2): How many days to look back
- *   - limit (number, default 20): Max tickers to fetch price data for
- *                                 (Polygon free tier: 5 calls/min)
+ *   - limit (number, default 2): Max tickers to fetch data for
  */
 router.get('/', async (req, res) => {
   try {
@@ -42,10 +42,22 @@ router.get('/', async (req, res) => {
     const atrData = await batchATRRatios(toFetch);
     console.log(`[Scan] Got ATR data for ${atrData.size} tickers`);
 
-    // Step 5: Merge earnings calendar with price data and ATR
+    // Step 5: Fetch fundamentals from 8-K filings
+    const fundamentals = await batchFundamentals(toFetch);
+    console.log(`[Scan] Got fundamentals for ${fundamentals.size} tickers`);
+
+    // Step 6: Merge all data
     const results = earnings.map(item => {
       const prices = priceData.get(item.ticker);
       const atr = atrData.get(item.ticker);
+      const fund = fundamentals.get(item.ticker);
+
+      // Determine if fundamental change warrants skipping the fade
+      // Material change = guidance down OR multiple one-time items
+      const fundamentalChange = fund
+        ? (fund.guidanceChange === 'down' || fund.oneTimeItems.length >= 2)
+        : false;
+
       return {
         symbol: item.ticker,
         earningsDate: item.earningsDate,
@@ -60,7 +72,9 @@ router.get('/', async (req, res) => {
         atr: atr?.atr ?? null,
         atrRatio: atr?.atrRatio ?? null,
         flagged: atr?.flagged ?? false,
-        fundamentalChange: false, // Phase 1.4: from fundamentals analysis
+        fundamentalChange,
+        guidanceChange: fund?.guidanceChange ?? 'unknown',
+        oneTimeItems: fund?.oneTimeItems ?? [],
         source: item.source,
         filingAccession: item.filingAccession
       };
@@ -68,10 +82,8 @@ router.get('/', async (req, res) => {
 
     // Sort: flagged (>1.5x ATR) first, then by ATR ratio descending
     results.sort((a, b) => {
-      // Flagged items first
       if (a.flagged && !b.flagged) return -1;
       if (!a.flagged && b.flagged) return 1;
-      // Then by ATR ratio descending
       if (a.atrRatio === null) return 1;
       if (b.atrRatio === null) return -1;
       return b.atrRatio - a.atrRatio;
@@ -81,6 +93,7 @@ router.get('/', async (req, res) => {
       success: true,
       count: results.length,
       withPriceData: priceData.size,
+      withFundamentals: fundamentals.size,
       daysBack,
       limit,
       results
