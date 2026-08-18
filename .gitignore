@@ -10,6 +10,9 @@ node_modules/
 dist/
 build/
 
+# Database
+server/data/
+
 # IDE
 .vscode/
 .idea/

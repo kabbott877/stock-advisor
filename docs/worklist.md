@@ -58,7 +58,7 @@
 ### 2.3 Scan State ✅
 - [x] Handle loading state
 - [x] Handle empty results
-- [ ] Cache recent scan (avoid duplicate API calls)
+- [x] Cache recent scan (avoid duplicate API calls)
 
 ---
 
@@ -89,9 +89,9 @@
 - [x] Confidence score
 
 ### 3.6 News Tab ✅
-- [ ] Integrate news API (Finviz / NewsAPI / similar)
+- [x] Integrate news API (Finnhub)
 - [x] Display headlines with timestamps
-- [ ] Filter by relevance
+- [x] Filter by relevance
 
 ### 3.7 Risk Tab ✅
 - [x] Position sizing calculator
@@ -103,9 +103,9 @@
 ## Phase 4: Polish & Ship
 
 - [x] Master-Detail layout: inline expansion below selected row (no more scrolling to bottom)
-- [ ] UI refinement (responsive)
-- [ ] Error handling (API failures, rate limits)
-- [ ] Loading states and empty states
+- [x] UI refinement (responsive)
+- [x] Error handling (API failures, rate limits)
+- [x] Loading states and empty states
 - [ ] Basic analytics / usage tracking
 - [ ] Deploy to hosting (Vercel, Railway, etc.)
 
@@ -113,7 +113,7 @@
 
 ## Phase 5: Production Readiness
 
-- [ ] Database for user persistence (replace in-memory store)
+- [x] Database for user persistence (SQLite)
 - [ ] Refresh token flow
 - [ ] Rate limiting per user
 - [ ] Input validation (zod/joi)
@@ -124,6 +124,6 @@
 
 ## Open Questions
 
-- [ ] Which database? (SQLite, PostgreSQL, MongoDB)
+- [x] Which database? SQLite
 - [ ] Polygon.io free tier sufficient? Or paid?
 - [ ] Deployment target? (Vercel, Railway, self-hosted)

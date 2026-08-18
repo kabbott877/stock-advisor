@@ -1,11 +1,9 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { generateToken } from '../middleware/auth.js';
+import { getDatabase } from '../database.js';
 
 const router = express.Router();
-
-// In-memory user store (replace with database in production)
-const users = [];
 
 // Register
 router.post('/register', async (req, res) => {
@@ -16,24 +14,22 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const existingUser = users.find(u => u.email === email);
+    const db = getDatabase();
+
+    // Check if user exists
+    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existingUser) {
       return res.status(409).json({ error: 'User already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = {
-      id: users.length + 1,
-      email,
-      password: hashedPassword,
-      createdAt: new Date()
-    };
+    const result = db.prepare('INSERT INTO users (email, password) VALUES (?, ?)').run(email, hashedPassword);
 
-    users.push(user);
-
+    const user = { id: result.lastInsertRowid, email };
     const token = generateToken(user);
     res.status(201).json({ token, user: { id: user.id, email: user.email } });
   } catch (err) {
+    console.error('[Auth] Register error:', err.message);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
@@ -47,7 +43,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const user = users.find(u => u.email === email);
+    const db = getDatabase();
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -57,9 +55,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = generateToken(user);
+    const token = generateToken({ id: user.id, email: user.email });
     res.json({ token, user: { id: user.id, email: user.email } });
   } catch (err) {
+    console.error('[Auth] Login error:', err.message);
     res.status(500).json({ error: 'Login failed' });
   }
 });

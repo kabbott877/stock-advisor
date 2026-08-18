@@ -8,26 +8,48 @@ function SymbolDetail({ symbol, token, onClose }) {
   const [research, setResearch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     fetchResearch();
   }, [symbol]);
 
-  const fetchResearch = async () => {
+  const fetchResearch = async (isRetry = false) => {
     setLoading(true);
     setError('');
+    if (isRetry) {
+      setRetryCount(prev => prev + 1);
+    }
 
     try {
       const response = await axios.get(`${API_URL}/api/research/${symbol}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 60000 // 1 minute for research data
       });
 
       setResearch(response.data.research);
+      setRetryCount(0);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to fetch research');
+      let errorMessage = 'Failed to fetch research';
+
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = 'Request timed out. Try again.';
+      } else if (err.response?.status === 429) {
+        errorMessage = 'Rate limited. Wait a moment.';
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (!err.response) {
+        errorMessage = 'Network error.';
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    fetchResearch(true);
   };
 
   const tabs = [
@@ -46,7 +68,25 @@ function SymbolDetail({ symbol, token, onClose }) {
           <h2>{symbol}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
-        <div className="loading">Loading research...</div>
+        <div className="tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="skeleton-detail">
+          <div className="skeleton-stat-grid">
+            <div className="skeleton skeleton-stat"></div>
+            <div className="skeleton skeleton-stat"></div>
+            <div className="skeleton skeleton-stat"></div>
+            <div className="skeleton skeleton-stat"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -58,7 +98,14 @@ function SymbolDetail({ symbol, token, onClose }) {
           <h2>{symbol}</h2>
           <button className="close-button" onClick={onClose}>×</button>
         </div>
-        <div className="error">{error}</div>
+        <div className="error" style={{ margin: '1rem' }}>
+          <div className="error-retry">
+            <span>{error}</span>
+            <button onClick={handleRetry} disabled={loading}>
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -184,12 +231,20 @@ function SymbolDetail({ symbol, token, onClose }) {
 
         {activeTab === 'news' && research.news && (
           <div className="news">
-            {research.news.map((item, index) => (
-              <div key={index} className="news-item">
-                <div className="headline">{item.headline}</div>
-                <div className="time">{item.time}</div>
+            {research.news.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">📰</div>
+                <h3>No news available</h3>
+                <p>News data will appear here when available</p>
               </div>
-            ))}
+            ) : (
+              research.news.map((item, index) => (
+                <div key={index} className="news-item">
+                  <div className="headline">{item.headline}</div>
+                  <div className="time">{item.time}</div>
+                </div>
+              ))
+            )}
           </div>
         )}
 

@@ -83,23 +83,23 @@ function ScanResults({ results, token }) {
           {filteredResults.map((result) => (
             <React.Fragment key={result.symbol}>
               <tr className={`${expandedSymbol === result.symbol ? 'expanded-row' : ''} ${result.flagged ? 'flagged-row' : ''}`}>
-                <td className="symbol">
+                <td className="symbol" data-label="Symbol">
                   {result.symbol}
                   {result.flagged && <span className="flag-badge" title="Overreaction candidate (>1.5x ATR)">⚡</span>}
                 </td>
-                <td>{result.earningsDate}</td>
-                <td className={result.movePercent >= 0 ? 'positive' : 'negative'}>
+                <td data-label="Earnings Date">{result.earningsDate}</td>
+                <td className={result.movePercent >= 0 ? 'positive' : 'negative'} data-label="Move %">
                   {result.movePercent !== null
                     ? `${result.movePercent > 0 ? '+' : ''}${result.movePercent}%`
                     : '—'}
                 </td>
-                <td className={result.atrRatio >= 2 ? 'high-ratio' : ''}>
+                <td className={result.atrRatio >= 2 ? 'high-ratio' : ''} data-label="ATR Ratio">
                   {result.atrRatio !== null ? `${result.atrRatio}x` : '—'}
                 </td>
-                <td className={result.fundamentalChange ? 'warning' : ''}>
+                <td className={result.fundamentalChange ? 'warning' : ''} data-label="Fundamental Change">
                   {result.fundamentalChange ? 'Yes' : 'No'}
                 </td>
-                <td>
+                <td data-label="Action">
                   <button
                     className={`research-button ${expandedSymbol === result.symbol ? 'active' : ''}`}
                     onClick={() => handleToggle(result.symbol)}
@@ -125,8 +125,10 @@ function ScanResults({ results, token }) {
       </table>
 
       {filteredResults.length === 0 && (
-        <div className="no-results">
-          {filter ? 'No symbols match filter' : 'No results found'}
+        <div className="empty-state">
+          <div className="empty-state-icon">🔍</div>
+          <h3>{filter ? 'No symbols match filter' : 'No results found'}</h3>
+          <p>{filter ? 'Try a different search term' : 'Run a scan to see results'}</p>
         </div>
       )}
     </div>

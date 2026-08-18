@@ -4,12 +4,17 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 
+import { initDatabase } from './database.js';
 import authRoutes from './routes/auth.js';
 import earningsRoutes from './routes/earnings.js';
 import scanRoutes from './routes/scan.js';
 import researchRoutes from './routes/research.js';
+import newsRoutes from './routes/news.js';
 
 dotenv.config();
+
+// Initialize database
+initDatabase();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +55,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/earnings', earningsRoutes);
 app.use('/api/scan', scanRoutes);
 app.use('/api/research', researchRoutes);
+app.use('/api/news', newsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
